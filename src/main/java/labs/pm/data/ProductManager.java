@@ -99,7 +99,15 @@ public class ProductManager {
         printProductReport(findProduct(id));
     }
 
-    private static  class ResourceFormatter {
+    public void printProducts(Comparator<Product> sorter) {
+        List<Product> productsList = new ArrayList<Product>(products.keySet());
+        productsList.sort(sorter);
+        for(Product product: productsList) {
+            printProductReport(product);
+        }
+    }
+
+    private static class ResourceFormatter {
         private ResourceBundle resources;
         private DateTimeFormatter dateFormatter;
         private NumberFormat moneyFormat;
