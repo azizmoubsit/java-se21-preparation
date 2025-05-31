@@ -4,16 +4,20 @@
 
 package labs.pm.app;
 
+import labs.pm.data.Product;
+import labs.pm.data.ProductManager;
+import labs.pm.data.Rating;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
-
-import labs.pm.data.*;
+import java.util.function.Predicate;
 
 /**
  * {@code Shop} class represents an application that manages Products
- * @version 1.0
+ *
  * @author aziz
+ * @version 1.0
  **/
 public class Shop {
     public static void main(String[] args) {
@@ -42,8 +46,8 @@ public class Shop {
 //        pm.printProductReport(1);
         Comparator<Product> sortByRating = Comparator.comparingInt(pr -> pr.getRating().ordinal());
         Comparator<Product> sortByPrice = Comparator.comparing(Product::getPrice);
-        pm.printProducts(sortByRating.thenComparing(sortByPrice).reversed());
-
+        Predicate<Product> filter = (pr) -> pr.getPrice().floatValue() < 2;
+        pm.printProducts(sortByRating.thenComparing(sortByPrice).reversed(), filter);
 //        Product d1 = pm.createProduct(10, "Coffee", BigDecimal.valueOf(2.99), Rating.THREE);
 //        Product f1 = pm.createProduct(108, "Burger", BigDecimal.valueOf(9.99), Rating.THREE, LocalDate.now().plusDays(0));
 //        Product f2 = pm.createProduct(10, "Burger", BigDecimal.valueOf(9.99), Rating.THREE, LocalDate.now().plusDays(2));

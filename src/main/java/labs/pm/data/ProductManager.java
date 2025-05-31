@@ -11,18 +11,20 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author aziz
  **/
 public class ProductManager {
-    private  Map<Product, List<Review>> products = new HashMap<>();
     private static Map<String, ResourceFormatter> formatters =
             Map.of(
                     "en-US", new ResourceFormatter(Locale.US),
                     "fr-FR", new ResourceFormatter(Locale.FRENCH),
                     "ar-MA", new ResourceFormatter(Locale.of("ar", "MA"))
             );
+    private Map<Product, List<Review>> products = new HashMap<>();
     private ResourceFormatter formatter;
 
     public ProductManager(String languageTag) {
@@ -34,12 +36,12 @@ public class ProductManager {
         this(locale.toLanguageTag());
     }
 
-    public void changeLocale(String languageTag) {
-        formatter = formatters.getOrDefault(languageTag, formatters.get("en-US"));
-    }
-
     public static Set<String> getSupportedLocales() {
         return formatters.keySet();
+    }
+
+    public void changeLocale(String languageTag) {
+        formatter = formatters.getOrDefault(languageTag, formatters.get("en-US"));
     }
 
     public Product createProduct(int id, String name, BigDecimal price, Rating rating) {
@@ -55,10 +57,11 @@ public class ProductManager {
     }
 
     public Product findProduct(int id) {
-        for (Product product: products.keySet())
-            if(product.getId() == id)
-                return product;
-        return null;
+        return products.keySet()
+                .stream()
+                .filter(p -> p.getId() == id)
+                .findFirst()
+                .orElse(null);
     }
 
     public Product reviewProduct(Product product, Rating rating, String comments) {
@@ -66,11 +69,8 @@ public class ProductManager {
         products.remove(product);
         reviews.add(new Review(rating, comments));
 
-        int sum = 0;
-        for(Review review: reviews) {
-            sum += review.rating().ordinal();
-        }
-        Product newProduct = product.applyRating(Math.round((float)sum/reviews.size()));
+        double average = reviews.stream().mapToInt(r -> r.rating().ordinal()).average().orElse(0);
+        Product newProduct = product.applyRating((int) Math.round(average));
         products.put(newProduct, reviews);
         return newProduct;
     }
@@ -85,13 +85,14 @@ public class ProductManager {
         txt.append("\n");
         List<Review> reviews = products.get(product);
         Collections.sort(reviews);
-        if(reviews.isEmpty())
+        if (reviews.isEmpty())
             txt.append(formatter.getText("no.reviews"));
         else
-            for (Review review : reviews) {
-                txt.append(formatter.formatReview(review));
-                txt.append("\n");
-            }
+            txt.append(
+                    reviews.stream()
+                            .map(review -> formatter.formatReview(review))
+                            .collect(Collectors.joining("\n"))
+            );
         System.out.println(txt);
     }
 
@@ -99,12 +100,26 @@ public class ProductManager {
         printProductReport(findProduct(id));
     }
 
-    public void printProducts(Comparator<Product> sorter) {
-        List<Product> productsList = new ArrayList<Product>(products.keySet());
-        productsList.sort(sorter);
-        for(Product product: productsList) {
-            printProductReport(product);
-        }
+    public void printProducts(Comparator<Product> sorter, Predicate<Product> filter) {
+        products.keySet()
+                .stream()
+                .filter(filter)
+                .sorted(sorter)
+                .forEach(this::printProductReport);
+    }
+
+    public Map<String, String> getDiscount() {
+        return products.keySet()
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                product -> product.getRating().getStars(),
+                                Collectors.collectingAndThen(Collectors.summingDouble(
+                                                product -> product.getDiscount().doubleValue()),
+                                        discount -> formatter.moneyFormat.format(discount)
+                                )
+                        )
+                );
     }
 
     private static class ResourceFormatter {
