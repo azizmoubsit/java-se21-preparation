@@ -12,6 +12,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
@@ -24,6 +26,7 @@ public class ProductManager {
                     "fr-FR", new ResourceFormatter(Locale.FRENCH),
                     "ar-MA", new ResourceFormatter(Locale.of("ar", "MA"))
             );
+    private static Logger logger = Logger.getLogger(ProductManager.class.getName());
     private Map<Product, List<Review>> products = new HashMap<>();
     private ResourceFormatter formatter;
 
@@ -56,12 +59,12 @@ public class ProductManager {
         return product;
     }
 
-    public Product findProduct(int id) {
+    public Product findProduct(int id) throws ProductManagerException {
         return products.keySet()
                 .stream()
                 .filter(p -> p.getId() == id)
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(() -> new ProductManagerException("No product with id: " + id + " was found"));
     }
 
     public Product reviewProduct(Product product, Rating rating, String comments) {
@@ -76,7 +79,12 @@ public class ProductManager {
     }
 
     public Product reviewProduct(int id, Rating rating, String comments) {
-        return reviewProduct(findProduct(id), rating, comments);
+        try {
+            return reviewProduct(findProduct(id), rating, comments);
+        } catch (ProductManagerException e) {
+            logger.log(Level.INFO, e.getMessage());
+            return null;
+        }
     }
 
     public void printProductReport(Product product) {
@@ -97,7 +105,11 @@ public class ProductManager {
     }
 
     public void printProductReport(int id) {
-        printProductReport(findProduct(id));
+        try {
+            printProductReport(findProduct(id));
+        } catch (ProductManagerException e) {
+            logger.log(Level.INFO, e.getMessage());
+        }
     }
 
     public void printProducts(Comparator<Product> sorter, Predicate<Product> filter) {
