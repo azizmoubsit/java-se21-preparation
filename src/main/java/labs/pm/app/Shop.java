@@ -22,16 +22,18 @@ import java.util.function.Predicate;
 public class Shop {
     public static void main(String[] args) {
         ProductManager pm = new ProductManager("fr-FR");
-        Product p1 = pm.createProduct(1, "Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED);
-        pm.printProductReport(1);
-        pm.reviewProduct(1, Rating.FOUR, "Good product");
-        pm.reviewProduct(1, Rating.ONE, "Bad product");
-        pm.reviewProduct(1, Rating.TWO, "product not good");
-        pm.reviewProduct(1, Rating.ONE, "Very Bad");
-        pm.printProductReport(1);
+//        Product p1 = pm.createProduct(1, "Tea", BigDecimal.valueOf(1.99), Rating.NOT_RATED);
+        Product p1 = pm.parseProduct("R,1,Tea,1.99,4,2025-06-20");
+        pm.parseReview("1,5,Nice hot cup of tea");
+//        pm.reviewProduct(1, Rating.FOUR, "Good product");
+//        pm.printProductReport(1);
+//        pm.reviewProduct(1, Rating.ONE, "Bad product");
+//        pm.reviewProduct(1, Rating.TWO, "product not good");
+//        pm.reviewProduct(1, Rating.ONE, "Very Bad");
+//        pm.printProductReport(1);
         Product p2 = pm.createProduct(2, "Burger", BigDecimal.valueOf(9.99), Rating.NOT_RATED, LocalDate.now().minusDays(4));
 //        pm.printProductReport(2);
-        pm.reviewProduct(1, Rating.FOUR, "Good product");
+//        pm.reviewProduct(1, Rating.FOUR, "Good product");
         pm.reviewProduct(2, Rating.FIVE, "Perfect product");
         pm.reviewProduct(2, Rating.TWO, "Bad product");
         pm.reviewProduct(2, Rating.THREE, "Good");
