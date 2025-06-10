@@ -4,7 +4,13 @@
 
 package labs.pm.data;
 
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -34,6 +40,9 @@ public class ProductManager {
     private ResourceBundle config = ResourceBundle.getBundle("config");
     private MessageFormat reviewFormat = new MessageFormat(config.getString("review.data.format"));
     private MessageFormat productFormat = new MessageFormat(config.getString("product.data.format"));
+    private Path reportsFolder = Path.of(config.getString("reports.folder"));
+    private Path dataFolder = Path.of(config.getString("data.folder"));
+    private Path tempFolder = Path.of(config.getString("temp.folder"));
 
     public ProductManager(String languageTag) {
         changeLocale(languageTag);
@@ -92,20 +101,31 @@ public class ProductManager {
     }
 
     public void printProductReport(Product product) {
-        StringBuilder txt = new StringBuilder();
-        txt.append(formatter.formatProduct(product));
-        txt.append("\n");
-        List<Review> reviews = products.get(product);
-        Collections.sort(reviews);
-        if (reviews.isEmpty())
-            txt.append(formatter.getText("no.reviews"));
-        else
-            txt.append(
-                    reviews.stream()
-                            .map(review -> formatter.formatReview(review))
-                            .collect(Collectors.joining("\n"))
-            );
-        System.out.println(txt);
+        Path productFile = reportsFolder.resolve(MessageFormat.format(config.getString("report.file"), product.getId()));
+        try (PrintWriter out = new PrintWriter(
+                new OutputStreamWriter(
+                        Files.newOutputStream(
+                                productFile,
+                                StandardOpenOption.CREATE),
+                        StandardCharsets.UTF_8)
+        )
+        ) {
+            out.append(formatter.formatProduct(product));
+            out.append(System.lineSeparator());
+            List<Review> reviews = products.get(product);
+            Collections.sort(reviews);
+            if (reviews.isEmpty())
+                out.append(formatter.getText("no.reviews"));
+            else
+                out.append(
+                        reviews.stream()
+                                .map(review -> formatter.formatReview(review))
+                                .collect(Collectors.joining(System.lineSeparator()))
+                );
+
+        } catch (Exception e) {
+            logger.log(Level.INFO, e.getMessage());
+        }
     }
 
     public void printProductReport(int id) {
