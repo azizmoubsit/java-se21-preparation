@@ -4,9 +4,7 @@
 
 package labs.pm.data;
 
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -220,6 +219,46 @@ public class ProductManager {
                     .collect(Collectors.toMap(product -> product, this::loadReviews));
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error while loading products with reviews " + e.getMessage());
+        }
+    }
+
+    private void dumpData() {
+        try {
+            if (Files.notExists(tempFolder)) {
+                Files.createDirectory(tempFolder);
+            }
+            Path tempFile = tempFolder.resolve(MessageFormat.format(config.getString("temp.file"), Instant.now()));
+            try (ObjectOutputStream out = new ObjectOutputStream(Files.newOutputStream(tempFile, StandardOpenOption.CREATE))) {
+                out.writeObject(products);
+                products = new HashMap<>();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Error while creating temp file: ", e);
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error while dumping ", e);
+        }
+    }
+
+    private void restoreData() {
+        try {
+            Path tempFile;
+            try (Stream<Path> filesList = Files.list(tempFolder)) {
+                tempFile = filesList
+                        .filter(path -> path.getFileName().toString().endsWith("tmp"))
+                        .findFirst()
+                        .orElseThrow();
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Error while listing temp file: ", e);
+                throw new RuntimeException(e);
+            }
+
+            try (ObjectInputStream in = new ObjectInputStream(Files.newInputStream(tempFile, StandardOpenOption.DELETE_ON_CLOSE))) {
+                products = (HashMap<Product, List<Review>>) in.readObject();
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Error while opening temp file: ", e);
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error while restoring ", e);
         }
     }
 

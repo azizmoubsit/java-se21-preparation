@@ -1,0 +1,5 @@
+Tea, Prix : 1,99 ¤, Note : ★★☆☆☆, À consommer avant : mercredi 11 juin 2025, 🍹
+Avis : ★★★★☆	Good product
+Avis : ★★☆☆☆	product not good
+Avis : ★☆☆☆☆	Bad product
+Avis : ★☆☆☆☆	Very Bad

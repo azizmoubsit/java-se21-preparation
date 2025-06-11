@@ -4,13 +4,15 @@
 
 package labs.pm.data;
 
+import java.io.Serializable;
+
 /**
  * @author aziz
  **/
-public record Review(Rating rating, String comments) implements Comparable<Review> {
+public record Review(Rating rating, String comments) implements Serializable, Comparable<Review> {
     @Override
     public String toString() {
-        return "Rating: " + rating.getStars()+ "\tComments: " + comments;
+        return "Rating: " + rating.getStars() + "\tComments: " + comments;
     }
 
     @Override

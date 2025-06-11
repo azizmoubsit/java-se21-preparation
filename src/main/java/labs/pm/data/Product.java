@@ -4,6 +4,7 @@
 
 package labs.pm.data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -17,15 +18,16 @@ import java.util.Objects;
  * <br>
  * Each product can have a discount, calculated based on a
  * {@link DISCOUNT_RATE discount rate}
- * @version 1.0
+ *
  * @author aziz
+ * @version 1.0
  **/
-public sealed abstract class Product implements Rateable<Product> permits Food, Drink  {
+public sealed abstract class Product implements Serializable, Rateable<Product> permits Food, Drink {
     private static final BigDecimal DISCOUNT_RATE = BigDecimal.valueOf(0.1);
+    private final Rating rating;
     private int id;
     private String name;
     private BigDecimal price;
-    private final Rating rating;
 
     Product(int id, String name, BigDecimal price, Rating rating) {
         this.id = id;
@@ -98,10 +100,10 @@ public sealed abstract class Product implements Rateable<Product> permits Food, 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if(o instanceof Product p
+        if (o instanceof Product p
 //                && o.getClass() == this.getClass()
         ) {
-            return  this.id == p.id;
+            return this.id == p.id;
         }
         return false;
     }
