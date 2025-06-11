@@ -4,6 +4,7 @@
 
 package labs.pm.data;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -23,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author aziz
@@ -46,6 +48,7 @@ public class ProductManager {
 
     public ProductManager(String languageTag) {
         changeLocale(languageTag);
+        loadAllData();
     }
 
     public ProductManager(Locale locale) {
@@ -144,16 +147,39 @@ public class ProductManager {
                 .forEach(this::printProductReport);
     }
 
-    public void parseReview(String text) {
+    public Review parseReview(String text) {
+        Review review = null;
         try {
             Object[] values = reviewFormat.parse(text);
-            reviewProduct(Integer.parseInt((String) values[0]), Rateable.convert(Integer.parseInt((String) values[1])), (String) values[2]);
+            review = new Review(Rateable.convert(Integer.parseInt((String) values[0])), (String) values[1]);
         } catch (ParseException | NumberFormatException e) {
             logger.log(Level.WARNING, "Error while parsing review: " + text, e.getMessage());
         }
+        return review;
+    }
+
+    private List<Review> loadReviews(Product product) {
+        List<Review> reviews = null;
+
+        Path file = dataFolder.resolve(MessageFormat.format(config.getString("reviews.data.file"), product.getId()));
+        if (Files.notExists(file)) {
+            reviews = new ArrayList<>();
+        } else {
+            try (Stream<String> lines = Files.lines(file, StandardCharsets.UTF_8)) {
+                reviews = lines.map(this::parseReview)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Error loading reviews " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+        return reviews;
     }
 
     public Product parseProduct(String text) {
+        Product product = null;
         try {
             Object[] values = productFormat.parse(text);
             char type = ((String) values[0]).charAt(0);
@@ -161,7 +187,7 @@ public class ProductManager {
             String name = (String) values[2];
             BigDecimal price = BigDecimal.valueOf(Double.parseDouble((String) values[3]));
             int rating = Integer.parseInt((String) values[4]);
-            Product product = switch (type) {
+            product = switch (type) {
                 case 'D' -> createProduct(id, name, price, Rateable.convert(rating));
                 case 'F' ->
                         createProduct(id, name, price, Rateable.convert(rating), LocalDate.parse((String) values[5]));
@@ -169,10 +195,31 @@ public class ProductManager {
             };
 
             products.put(product, new ArrayList<>());
-            return product;
         } catch (ParseException | NumberFormatException | DateTimeParseException | ProductManagerException e) {
             logger.log(Level.WARNING, "Error while parsing product: " + text + " " + e.getMessage());
-            return null;
+        }
+        return product;
+    }
+
+    private Product loadProduct(Path file) {
+        Product product = null;
+        try (Stream<String> lines = Files.lines(dataFolder.resolve(file), StandardCharsets.UTF_8)) {
+            product = parseProduct(lines.findFirst().orElseThrow());
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error while parsing product: " + e.getMessage());
+        }
+        return product;
+    }
+
+    private void loadAllData() {
+        try (Stream<Path> filesList = Files.list(dataFolder)) {
+            products = filesList
+                    .filter(file -> file.getFileName().toString().startsWith("product"))
+                    .map(this::loadProduct)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(product -> product, this::loadReviews));
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error while loading products with reviews " + e.getMessage());
         }
     }
 

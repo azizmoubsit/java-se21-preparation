@@ -1,5 +1,6 @@
-Tea, Prix : 1,99 ¤, Note : ★★☆☆☆, À consommer avant : mardi 10 juin 2025, 🍹
-Avis : ★★★★★	Nice hot cup of tea
-Avis : ★★☆☆☆	product not good
-Avis : ★☆☆☆☆	Bad product
-Avis : ★☆☆☆☆	Very Bad
+Tea, Prix : 1,99 ¤, Note : ★★★★☆, À consommer avant : mercredi 11 juin 2025, 🍹
+Avis : ★★★★★	This is the best one I had ever
+Avis : ★★★★☆	I liked it
+Avis : ★★★★☆	Good choice
+Avis : ★★★☆☆	Could have been better
+Avis : ★★☆☆☆	Very small - expected more
